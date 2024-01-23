@@ -4,7 +4,7 @@ import { appName } from '~/constants'
 interface Data {
   id: string
   ip: string
-  links: string
+  link: string
   websocket_key: string
 }
 
@@ -15,11 +15,11 @@ const columns = [{
   key: 'ip',
   label: 'IP',
 }, {
-  key: 'links',
-  label: 'Link',
-}, {
   key: 'websocket_key',
   label: 'WebsocketKey',
+}, {
+  key: 'link',
+  label: 'Link',
 }]
 
 useHead({
@@ -38,10 +38,15 @@ const isDark = computed({
 const search = ref('')
 const tableData = ref<Data[]>([])
 const runtimeConfig = useRuntimeConfig()
+const { copy, copied } = useClipboard()
 
-onMounted(async () => {
-  const data = await $fetch('/api/client', { method: 'GET', baseURL: runtimeConfig.public.remote_host }) as Data[]
+async function onSearch() {
+  const data = await $fetch('/api/client', { method: 'GET', baseURL: runtimeConfig.public.remote_host, query: { search: search.value } }) as Data[]
   tableData.value = data
+}
+
+onMounted(() => {
+  onSearch()
 })
 </script>
 
@@ -80,6 +85,8 @@ onMounted(async () => {
         autocomplete="off"
         :ui="{ icon: { trailing: { pointer: '' } } }"
         size="xl"
+        @blur="() => onSearch()"
+        @keydown.enter="() => onSearch()"
       >
         <template #trailing>
           <UButton
@@ -93,7 +100,21 @@ onMounted(async () => {
         </template>
       </UInput>
 
-      <UTable :columns="columns" :rows="tableData" class="mt-30px" />
+      <UTable :columns="columns" :rows="tableData" class="mt-30px">
+        <template #link-data="{ row }">
+          <div class="flex items-center">
+            <ULink
+              :to="row.link"
+              target="_blank"
+              active-class="text-primary"
+              inactive-class="text-green-500 dark:text-green-400 hover:text-green-700 dark:hover:text-green-200"
+            >
+              {{ row.link }}
+            </ULink>
+            <div :class="!copied ? 'i-mingcute-copy-2-fill' : 'i-lucide-copy-check'" class="ml-6px w-14px cursor-pointer hover:color-gray hover:dark:color-white" @click="copy(row.link)" />
+          </div>
+        </template>
+      </UTable>
     </div>
   </UContainer>
 </template>
