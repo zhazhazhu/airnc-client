@@ -10,9 +10,7 @@ export default defineNuxtConfig({
   ],
 
   runtimeConfig: {
-    public: {
-      remote_host: process.env.REMOTE_HOST,
-    },
+    remote_host: process.env.REMOTE_HOST,
   },
 
   devServer: {

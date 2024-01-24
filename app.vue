@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import { appName } from '~/constants'
-
-interface Data {
-  id: string
-  ip: string
-  link: string
-  websocket_key: string
-}
+import { UInput } from '#components'
 
 const columns = [{
   key: 'id',
@@ -14,9 +8,6 @@ const columns = [{
 }, {
   key: 'ip',
   label: 'IP',
-}, {
-  key: 'websocket_key',
-  label: 'WebsocketKey',
 }, {
   key: 'link',
   label: 'Link',
@@ -36,18 +27,15 @@ const isDark = computed({
   },
 })
 const search = ref('')
-const tableData = ref<Data[]>([])
-const runtimeConfig = useRuntimeConfig()
 const { copy, copied } = useClipboard()
+const { data, refresh, pending } = useFetch('/api/client', { query: { search }, watch: false })
+const inputInstance = ref<InstanceType<typeof UInput>>()
 
-async function onSearch() {
-  const data = await $fetch('/api/client', { method: 'GET', baseURL: runtimeConfig.public.remote_host, query: { search: search.value } }) as Data[]
-  tableData.value = data
+function onSearch() {
+  const el = inputInstance.value?.input
+  el && el.blur()
+  refresh()
 }
-
-onMounted(() => {
-  onSearch()
-})
 </script>
 
 <template>
@@ -76,8 +64,9 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="md:mx-100px sm:mx-20px md:mt-100px sm:mt-20px">
+    <div class="mt-20px md:mx-100px sm:mx-20px md:mt-80px">
       <UInput
+        ref="inputInstance"
         v-model="search"
         name="search"
         placeholder="Search..."
@@ -85,8 +74,7 @@ onMounted(() => {
         autocomplete="off"
         :ui="{ icon: { trailing: { pointer: '' } } }"
         size="xl"
-        @blur="() => onSearch()"
-        @keydown.enter="() => onSearch()"
+        @change="onSearch"
       >
         <template #trailing>
           <UButton
@@ -95,14 +83,20 @@ onMounted(() => {
             variant="link"
             icon="i-heroicons-x-mark-20-solid"
             :padded="false"
-            @click="search = ''"
+            @click="() => {
+              search = ''
+              onSearch()
+            }"
           />
         </template>
       </UInput>
 
-      <UTable :columns="columns" :rows="tableData" class="mt-30px">
+      <UTable :columns="columns" :rows="data || []" class="mt-30px" :loading="pending">
+        <template #quantity-data="{ row }">
+          {{ row.quantity.value }}
+        </template>
         <template #link-data="{ row }">
-          <div class="flex items-center">
+          <div class="group flex items-center">
             <ULink
               :to="row.link"
               target="_blank"
@@ -111,7 +105,8 @@ onMounted(() => {
             >
               {{ row.link }}
             </ULink>
-            <div :class="!copied ? 'i-mingcute-copy-2-fill' : 'i-lucide-copy-check'" class="ml-6px w-14px cursor-pointer hover:color-gray hover:dark:color-white" @click="copy(row.link)" />
+
+            <div :class="!copied ? 'i-mingcute-copy-2-fill' : 'i-lucide-copy-check'" class="ml-6px w-14px cursor-pointer opacity-0 transition-opacity duration-500 hover:color-gray group-hover:opacity-100 hover:dark:color-white" @click="copy(row.link)" />
           </div>
         </template>
       </UTable>
