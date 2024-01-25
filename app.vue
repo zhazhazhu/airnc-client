@@ -64,6 +64,19 @@ function onSearch() {
             <div class="h-8 w-8" />
           </template>
         </ClientOnly>
+        <UButton
+          icon="i-mdi-github"
+          color="gray"
+          variant="ghost"
+          aria-label="Theme"
+          class="ml-6px"
+          @click="navigateTo('https://github.com/zhazhazhu/airnc', {
+            external: true,
+            open: {
+              target: '_blank',
+            },
+          })"
+        />
       </div>
     </div>
 
