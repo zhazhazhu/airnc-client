@@ -26,12 +26,15 @@ const isDark = computed({
     colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
   },
 })
-const search = ref('')
+const route = useRoute()
+const router = useRouter()
+const search = ref(route.query?.search as string || '')
 const { copy, copied } = useClipboard()
 const { data, refresh, pending } = useFetch('/api/client', { query: { search }, watch: false })
 const inputInstance = ref<InstanceType<typeof UInput>>()
 
 function onSearch() {
+  !search.value ? router.push('/') : router.push(`/?search=${search.value}`)
   const el = inputInstance.value?.input
   el && el.blur()
   refresh()
@@ -102,6 +105,7 @@ function onSearch() {
               target="_blank"
               active-class="text-primary"
               inactive-class="text-green-500 dark:text-green-400 hover:text-green-700 dark:hover:text-green-200"
+              download
             >
               {{ row.link }}
             </ULink>
